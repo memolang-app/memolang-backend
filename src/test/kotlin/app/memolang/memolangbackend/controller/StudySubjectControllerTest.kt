@@ -5,6 +5,7 @@ import app.memolang.memolangbackend.Token
 import app.memolang.memolangbackend.entity.StudySubjectEntity
 import app.memolang.memolangbackend.shouldBe
 import app.memolang.memolangbackend.shouldHaveSize
+import app.memolang.memolangbackend.shouldNotBe
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
@@ -13,11 +14,13 @@ class StudySubjectControllerTest : BaseIntegrationTest() {
     @Test
     fun `Create, retrieve and delete subject`() {
         val token = successfullyCreateUser()
-        restTemplate.postForEntity(
+        val postResponse = restTemplate.postForEntity(
             STUDY_SUBJECT_BASE_URL,
             request(token, mapOf("name" to "Spanish")),
             StudySubjectEntity::class.java
-        ).statusCode shouldBe HttpStatus.CREATED
+        )
+        postResponse.statusCode shouldBe HttpStatus.CREATED
+        postResponse.body!!.createdAt shouldNotBe null
         val subjectsAfterPost = successfullyListUserSubjects(token)
         subjectsAfterPost shouldHaveSize 1
         restTemplate.exchange(
