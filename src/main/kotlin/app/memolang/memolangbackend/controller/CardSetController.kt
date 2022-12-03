@@ -7,26 +7,28 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RestController
 
-@RestController("/api/card-set")
+const val CARD_SET_BASE_URL = "/api/card-set"
+
+@RestController
 class CardSetController {
-    @PostMapping
+    @PostMapping(CARD_SET_BASE_URL)
     fun create() {}
 
-    @PutMapping("/{id}")
+    @PutMapping("$CARD_SET_BASE_URL/{id}")
     fun update(@PathVariable id: Long) {}
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("$CARD_SET_BASE_URL/{id}")
     fun delete(@PathVariable id: Long) {}
 
-    @GetMapping
+    @GetMapping(CARD_SET_BASE_URL)
     fun getAll() {}
 
-    @PostMapping("/{setId}/cards")
+    @PostMapping("$CARD_SET_BASE_URL/{setId}/cards")
     fun addCard(@PathVariable setId: Long) {}
 
-    @DeleteMapping("/{setId}/cards/{cardId}")
+    @DeleteMapping("$CARD_SET_BASE_URL/{setId}/cards/{cardId}")
     fun deleteCard(@PathVariable setId: Long, @PathVariable cardId: Long) {}
 
-    @PostMapping("/{setId}/cards/{cardId}/reviews")
+    @PostMapping("$CARD_SET_BASE_URL/{setId}/cards/{cardId}/reviews")
     fun cardReviewed(@PathVariable setId: Long, @PathVariable cardId: Long) {}
 }

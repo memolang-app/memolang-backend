@@ -3,14 +3,16 @@ package app.memolang.memolangbackend.controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RestController
 
-@RestController("/api/users")
+const val AUTHENTICATION_BASE_URL = "/api/users"
+
+@RestController
 class AuthenticationController {
-    @PostMapping
+    @PostMapping(AUTHENTICATION_BASE_URL)
     fun register() {
 
     }
 
-    @PostMapping("/login")
+    @PostMapping("$AUTHENTICATION_BASE_URL/login")
     fun login() {
 
     }
