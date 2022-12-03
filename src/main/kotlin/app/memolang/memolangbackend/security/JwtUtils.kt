@@ -8,7 +8,6 @@ import io.jsonwebtoken.SignatureException
 import io.jsonwebtoken.UnsupportedJwtException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import java.util.*
 
@@ -18,10 +17,9 @@ class JwtUtils {
     @Value("\${app.jwtSecret}")
     private val jwtSecret: String? = null
 
-    fun generateJwtToken(authentication: Authentication): String {
-        val userPrincipal: MemoLangUserDetails = authentication.principal as MemoLangUserDetails
+    fun generateJwtToken(username: String): String {
         return Jwts.builder()
-            .setSubject(userPrincipal.username)
+            .setSubject(username)
             .setIssuedAt(Date())
             .signWith(SignatureAlgorithm.HS512, jwtSecret)
             .compact()

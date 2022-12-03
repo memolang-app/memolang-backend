@@ -26,7 +26,7 @@ class SecurityConfiguration {
             .csrf()
             .disable()
             .authorizeRequests()
-            .antMatchers(HttpMethod.GET, "$AUTHENTICATION_BASE_URL/**").permitAll()
+            .antMatchers(HttpMethod.POST, "$AUTHENTICATION_BASE_URL/**").permitAll()
             .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter::class.java)

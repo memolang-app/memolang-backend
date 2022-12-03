@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
 const val AUTHENTICATION_BASE_URL = "/api/users"
+const val LOGIN_URL = "$AUTHENTICATION_BASE_URL/login"
 
 @RestController
 class AuthenticationController(
@@ -31,18 +32,18 @@ class AuthenticationController(
         return ResponseEntity.status(HttpStatus.CREATED).body(body.toAuthenticatedUserPayload())
     }
 
-    @PostMapping("$AUTHENTICATION_BASE_URL/login")
+    @PostMapping(LOGIN_URL)
     fun login(@RequestBody body: AuthenticationRequestPayload): AuthenticatedUserPayload {
         val unauthorizedException = ResponseStatusException(HttpStatus.UNAUTHORIZED)
         val user = userRepository.findByUsername(body.username) ?: throw unauthorizedException
-        if (user.passwordHash != passwordEncoder.encode(body.password)) throw unauthorizedException
+        if (!passwordEncoder.matches(body.password, user.passwordHash)) throw unauthorizedException
         return body.toAuthenticatedUserPayload()
     }
 
     private fun AuthenticationRequestPayload.toAuthenticatedUserPayload() =
         AuthenticatedUserPayload(
             username = username,
-            token = jwtUtils.generateJwtToken(UsernamePasswordAuthenticationToken(username, password))
+            token = jwtUtils.generateJwtToken(username)
         )
 }
 
