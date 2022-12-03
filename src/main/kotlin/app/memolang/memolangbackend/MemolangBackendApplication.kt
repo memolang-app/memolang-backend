@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class MemoLangBackendApplication
 
 fun main(args: Array<String>) {
-	runApplication<MemoLangBackendApplication>(*args)
+    runApplication<MemoLangBackendApplication>(*args)
 }

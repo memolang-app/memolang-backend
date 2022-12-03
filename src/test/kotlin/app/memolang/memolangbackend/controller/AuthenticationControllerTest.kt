@@ -9,7 +9,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class AuthenticationControllerTest: BaseIntegrationTest() {
+class AuthenticationControllerTest : BaseIntegrationTest() {
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 

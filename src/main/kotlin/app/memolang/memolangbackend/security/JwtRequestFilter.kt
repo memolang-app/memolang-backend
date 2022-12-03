@@ -12,12 +12,11 @@ import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-
 @Component
 class JwtRequestFilter(
     private val userDetailsService: MemoLangUserDetailsService,
     private val jwtUtils: JwtUtils,
-): OncePerRequestFilter() {
+) : OncePerRequestFilter() {
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
