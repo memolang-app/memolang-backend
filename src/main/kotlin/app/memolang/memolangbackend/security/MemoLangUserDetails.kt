@@ -1,10 +1,10 @@
 package app.memolang.memolangbackend.security
 
-import app.memolang.memolangbackend.entity.MemoLangUser
+import app.memolang.memolangbackend.entity.MemoLangUserEntity
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 
-class MemoLangUserDetails(private val userEntity: MemoLangUser): UserDetails {
+class MemoLangUserDetails(private val userEntity: MemoLangUserEntity): UserDetails {
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
         return mutableListOf()
     }
