@@ -20,6 +20,7 @@ class StudySubjectController(
     private val studySubjectRepository: StudySubjectRepository,
 ) {
     @PostMapping(STUDY_SUBJECT_BASE_URL)
+    @ResponseStatus(HttpStatus.CREATED)
     fun create(principal: Principal, @RequestBody body: CardSetRequestBody): StudySubjectEntity =
         studySubjectRepository.save(
             StudySubjectEntity(
