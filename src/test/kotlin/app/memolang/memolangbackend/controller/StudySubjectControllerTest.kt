@@ -31,24 +31,24 @@ class StudySubjectControllerTest : BaseIntegrationTest() {
 
     @Test
     fun `Deleting someone else's subject fails`() {
-        val token1 = successfullyCreateUser(username = "user1")
-        val token2 = successfullyCreateUser(username = "user2")
+        val ownerToken = successfullyCreateUser(username = "user1")
+        val otherToken = successfullyCreateUser(username = "user2")
         val createSubjectResponse = restTemplate.postForEntity(
             STUDY_SUBJECT_BASE_URL,
-            request(token1, mapOf("name" to "Spanish")),
+            request(ownerToken, mapOf("name" to "Spanish")),
             StudySubjectEntity::class.java
         )
         createSubjectResponse.statusCode shouldBe HttpStatus.CREATED
         restTemplate.exchange(
             "$STUDY_SUBJECT_BASE_URL/${createSubjectResponse.body!!.id}",
             HttpMethod.DELETE,
-            request(token2),
+            request(otherToken),
             Any::class.java
         ).statusCode shouldBe HttpStatus.FORBIDDEN
         restTemplate.exchange(
             "$STUDY_SUBJECT_BASE_URL/${createSubjectResponse.body!!.id}",
             HttpMethod.DELETE,
-            request(token1),
+            request(ownerToken),
             Any::class.java
         ).statusCode shouldBe HttpStatus.NO_CONTENT
     }
