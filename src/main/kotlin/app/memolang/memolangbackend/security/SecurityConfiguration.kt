@@ -12,6 +12,11 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.servlet.config.annotation.CorsRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @EnableWebSecurity
 class SecurityConfiguration {
@@ -22,6 +27,7 @@ class SecurityConfiguration {
     fun filterChain(http: HttpSecurity, jwtRequestFilter: JwtRequestFilter): SecurityFilterChain {
         http
             .cors()
+            .configurationSource(corsConfigurationSource())
             .and()
             .csrf()
             .disable()
@@ -32,6 +38,22 @@ class SecurityConfiguration {
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter::class.java)
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         return http.build()
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues())
+        return source
+    }
+
+    @Bean
+    fun corsConfigurer(): WebMvcConfigurer {
+        return object : WebMvcConfigurer {
+            override fun addCorsMappings(registry: CorsRegistry) {
+                registry.addMapping("/**").allowedOrigins("http://localhost:61518")
+            }
+        }
     }
 
     @Bean

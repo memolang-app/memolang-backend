@@ -1,5 +1,6 @@
 package app.memolang.memolangbackend.controller
 
+import app.memolang.memolangbackend.entity.FlashCardEntity
 import app.memolang.memolangbackend.entity.StudySubjectEntity
 import app.memolang.memolangbackend.repository.StudySubjectRepository
 import org.springframework.http.HttpStatus
@@ -43,7 +44,18 @@ class StudySubjectController(
         studySubjectRepository.findByOwnerUsername(principal.name)
 
     @PostMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards")
-    fun addCard(@PathVariable subjectId: Long) {
+    fun addCard(
+        principal: Principal,
+        @PathVariable subjectId: Long,
+        @RequestBody flashCardEntity: FlashCardEntity,
+    ): StudySubjectEntity {
+        val subject = studySubjectRepository.findById(subjectId).orElse(null)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        if (subject.ownerUsername != principal.name) throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        if (flashCardEntity.id != null) throw ResponseStatusException(HttpStatus.CONFLICT)
+        subject.flashCards.add(flashCardEntity)
+        studySubjectRepository.save(subject)
+        return subject
     }
 
     @DeleteMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards/{cardId}")

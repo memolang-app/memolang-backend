@@ -2,9 +2,11 @@ package app.memolang.memolangbackend.entity
 
 import org.hibernate.annotations.CreationTimestamp
 import java.time.ZonedDateTime
+import javax.persistence.CascadeType
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
 import javax.persistence.Id
+import javax.persistence.OneToMany
 
 @Entity
 class StudySubjectEntity(
@@ -15,4 +17,9 @@ class StudySubjectEntity(
     var ownerUsername: String? = null,
     @CreationTimestamp
     var createdAt: ZonedDateTime? = null,
+    @OneToMany(
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
+    var flashCards: MutableList<FlashCardEntity> = mutableListOf(),
 )

@@ -24,12 +24,33 @@ class StudySubjectControllerTest : BaseIntegrationTest() {
         val subjectsAfterPost = successfullyListUserSubjects(token)
         subjectsAfterPost shouldHaveSize 1
         restTemplate.exchange(
-            "$STUDY_SUBJECT_BASE_URL/${subjectsAfterPost.first().get("id")}",
+            "$STUDY_SUBJECT_BASE_URL/${subjectsAfterPost.first()["id"]}",
             HttpMethod.DELETE,
             request(token),
             Any::class.java
         ).statusCode shouldBe HttpStatus.NO_CONTENT
         successfullyListUserSubjects(token) shouldHaveSize 0
+    }
+
+    @Test
+    fun `Add a card to a subject`() {
+        val token = successfullyCreateUser()
+        val createSubjectResponse = restTemplate.postForEntity(
+            STUDY_SUBJECT_BASE_URL,
+            request(token, mapOf("name" to "Spanish")),
+            StudySubjectEntity::class.java
+        )
+        createSubjectResponse.statusCode shouldBe HttpStatus.CREATED
+        createSubjectResponse.body!!.createdAt shouldNotBe null
+        val subjectsAfterPost = successfullyListUserSubjects(token)
+        subjectsAfterPost shouldHaveSize 1
+        restTemplate.postForEntity(
+            "$STUDY_SUBJECT_BASE_URL/${subjectsAfterPost.first()["id"]}/cards",
+            request(token, mapOf("question" to "hablar", "answer" to "to speak")),
+            Any::class.java
+        ).statusCode shouldBe HttpStatus.OK
+        val subjectsAfterAddingCard = successfullyListUserSubjects(token)
+        (subjectsAfterAddingCard.first()["flashCards"] as Collection<*>).shouldHaveSize(1)
     }
 
     @Test
