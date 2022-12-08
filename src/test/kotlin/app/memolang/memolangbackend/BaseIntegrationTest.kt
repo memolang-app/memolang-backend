@@ -2,12 +2,13 @@ package app.memolang.memolangbackend
 
 import app.memolang.memolangbackend.controller.AUTHENTICATION_BASE_URL
 import app.memolang.memolangbackend.controller.AuthenticatedUserPayload
+import app.memolang.memolangbackend.repository.MemoLangUserRepository
+import app.memolang.memolangbackend.repository.StudySubjectRepository
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.data.repository.CrudRepository
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -20,11 +21,15 @@ abstract class BaseIntegrationTest {
     protected lateinit var restTemplate: TestRestTemplate
 
     @Autowired
-    private lateinit var repositories: List<CrudRepository<*, *>>
+    private lateinit var subjectRepository: StudySubjectRepository
+
+    @Autowired
+    private lateinit var userRepository: MemoLangUserRepository
 
     @BeforeEach
     fun clearDb() {
-        repositories.forEach { it.deleteAll() }
+        subjectRepository.deleteAll()
+        userRepository.deleteAll()
     }
 
     protected fun successfullyCreateUser(

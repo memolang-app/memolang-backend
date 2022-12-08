@@ -4,6 +4,7 @@ import org.hibernate.annotations.CreationTimestamp
 import java.time.ZonedDateTime
 import javax.persistence.CascadeType
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.Id
 import javax.persistence.OneToMany
@@ -19,11 +20,16 @@ class StudySubjectEntity(
     var createdAt: ZonedDateTime? = null,
     @OneToMany(
         cascade = [CascadeType.ALL],
-        orphanRemoval = true
+        orphanRemoval = true,
+        fetch = FetchType.EAGER,
     )
     var flashCards: MutableList<FlashCardEntity> = mutableListOf(),
 ) {
-    fun advanceCard(cardId: Long) {
-        flashCards.find { it.id == cardId }?.advance()
+    fun advanceCard(cardId: Long): FlashCardEntity? {
+        return flashCards.find { it.id == cardId }?.also { it.advance() }
+    }
+
+    fun backToStage1(cardId: Long): FlashCardEntity? {
+        return flashCards.find { it.id == cardId }?.also { it.stage = Stage.EVERY_DAY }
     }
 }

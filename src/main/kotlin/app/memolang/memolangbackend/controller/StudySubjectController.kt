@@ -2,6 +2,7 @@ package app.memolang.memolangbackend.controller
 
 import app.memolang.memolangbackend.entity.FlashCardEntity
 import app.memolang.memolangbackend.entity.StudySubjectEntity
+import app.memolang.memolangbackend.repository.FlashCardRepository
 import app.memolang.memolangbackend.repository.StudySubjectRepository
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -13,15 +14,18 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import java.security.Principal
+import javax.transaction.Transactional
 
 const val STUDY_SUBJECT_BASE_URL = "/api/study-subject"
 
 @RestController
 class StudySubjectController(
     private val studySubjectRepository: StudySubjectRepository,
+    private val flashCardRepository: FlashCardRepository,
 ) {
     @PostMapping(STUDY_SUBJECT_BASE_URL)
     @ResponseStatus(HttpStatus.CREATED)
+    @Transactional
     fun create(principal: Principal, @RequestBody body: CardSetRequestBody): StudySubjectEntity =
         studySubjectRepository.save(
             StudySubjectEntity(
@@ -32,6 +36,7 @@ class StudySubjectController(
 
     @DeleteMapping("$STUDY_SUBJECT_BASE_URL/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Transactional
     fun delete(principal: Principal, @PathVariable id: Long) {
         val subject = studySubjectRepository.findById(id).orElse(null)
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
@@ -40,10 +45,12 @@ class StudySubjectController(
     }
 
     @GetMapping(STUDY_SUBJECT_BASE_URL)
+    @Transactional
     fun getUserSubjects(principal: Principal): List<StudySubjectEntity> =
         studySubjectRepository.findByOwnerUsername(principal.name)
 
     @PostMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards")
+    @Transactional
     fun addCard(
         principal: Principal,
         @PathVariable subjectId: Long,
@@ -57,6 +64,7 @@ class StudySubjectController(
     }
 
     @PostMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards/{cardId}/reviews")
+    @Transactional
     fun cardReviewed(
         principal: Principal,
         @PathVariable subjectId: Long,
@@ -64,7 +72,8 @@ class StudySubjectController(
         @RequestBody cardReviewRequestBody: CardReviewRequestBody,
     ) {
         val subject = findSubjectWithErrorHandling(principal, subjectId)
-        subject.advanceCard(cardId)
+        if (cardReviewRequestBody.known) subject.advanceCard(cardId)?.also { flashCardRepository.save(it) }
+        else subject.backToStage1(cardId)?.also { flashCardRepository.save(it) }
         studySubjectRepository.save(subject)
     }
 

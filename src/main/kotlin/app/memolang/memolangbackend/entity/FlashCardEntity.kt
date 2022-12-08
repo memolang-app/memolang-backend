@@ -1,5 +1,6 @@
 package app.memolang.memolangbackend.entity
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.ZonedDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -24,6 +25,9 @@ class FlashCardEntity(
     var stage: Stage = Stage.EVERY_DAY,
     var nextStudyAt: ZonedDateTime = ZonedDateTime.now(),
 ) {
+    @JsonProperty
+    fun shouldBeStudied() = stage != Stage.DONE && nextStudyAt.isBefore(ZonedDateTime.now())
+
     fun advance() {
         stage = stage.next()
         nextStudyAt = nextStudyAt.plusDays(stage.daysToAdvance.toLong())

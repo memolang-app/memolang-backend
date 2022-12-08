@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import javax.transaction.Transactional
 
 const val AUTHENTICATION_BASE_URL = "/api/users"
 const val LOGIN_URL = "$AUTHENTICATION_BASE_URL/login"
@@ -22,6 +23,7 @@ class AuthenticationController(
 ) {
 
     @PostMapping(AUTHENTICATION_BASE_URL)
+    @Transactional
     fun register(@RequestBody body: AuthenticationRequestPayload): ResponseEntity<Any> {
         if (userRepository.findByUsername(body.username) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("message" to "username taken"))
@@ -32,6 +34,7 @@ class AuthenticationController(
     }
 
     @PostMapping(LOGIN_URL)
+    @Transactional
     fun login(@RequestBody body: AuthenticationRequestPayload): AuthenticatedUserPayload {
         val unauthorizedException = ResponseStatusException(HttpStatus.UNAUTHORIZED)
         val user = userRepository.findByUsername(body.username) ?: throw unauthorizedException
