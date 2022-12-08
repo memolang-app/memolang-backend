@@ -22,4 +22,8 @@ class StudySubjectEntity(
         orphanRemoval = true
     )
     var flashCards: MutableList<FlashCardEntity> = mutableListOf(),
-)
+) {
+    fun advanceCard(cardId: Long) {
+        flashCards.find { it.id == cardId }?.advance()
+    }
+}

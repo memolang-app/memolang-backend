@@ -49,22 +49,32 @@ class StudySubjectController(
         @PathVariable subjectId: Long,
         @RequestBody flashCardEntity: FlashCardEntity,
     ): StudySubjectEntity {
-        val subject = studySubjectRepository.findById(subjectId).orElse(null)
-            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        if (subject.ownerUsername != principal.name) throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        val subject = findSubjectWithErrorHandling(principal, subjectId)
         if (flashCardEntity.id != null) throw ResponseStatusException(HttpStatus.CONFLICT)
         subject.flashCards.add(flashCardEntity)
         studySubjectRepository.save(subject)
         return subject
     }
 
-    @DeleteMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards/{cardId}")
-    fun deleteCard(@PathVariable subjectId: Long, @PathVariable cardId: Long) {
+    @PostMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards/{cardId}/reviews")
+    fun cardReviewed(
+        principal: Principal,
+        @PathVariable subjectId: Long,
+        @PathVariable cardId: Long,
+        @RequestBody cardReviewRequestBody: CardReviewRequestBody,
+    ) {
+        val subject = findSubjectWithErrorHandling(principal, subjectId)
+        subject.advanceCard(cardId)
+        studySubjectRepository.save(subject)
     }
 
-    @PostMapping("$STUDY_SUBJECT_BASE_URL/{subjectId}/cards/{cardId}/reviews")
-    fun cardReviewed(@PathVariable subjectId: Long, @PathVariable cardId: Long) {
+    fun findSubjectWithErrorHandling(principal: Principal, subjectId: Long): StudySubjectEntity {
+        val subject = studySubjectRepository.findById(subjectId).orElse(null)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        if (subject.ownerUsername != principal.name) throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        return subject
     }
 }
 
+data class CardReviewRequestBody(val known: Boolean)
 class CardSetRequestBody(val name: String)
