@@ -28,7 +28,7 @@ class StudySubjectController(
     @Transactional
     fun create(principal: Principal, @RequestBody body: CardSetRequestBody): StudySubjectEntity {
         validateUserLimits(principal.name)
-        studySubjectRepository.save(
+        return studySubjectRepository.save(
             StudySubjectEntity(
                 name = body.name,
                 ownerUsername = principal.name,
@@ -87,7 +87,7 @@ class StudySubjectController(
         return subject
     }
 
-    fun validateUserLimits(username: String): Boolean {
+    fun validateUserLimits(username: String) {
         val subjects = studySubjectRepository.findByOwnerUsername(username)
         if (subjects.size > 10) throw ResponseStatusException(HttpStatus.FORBIDDEN)
         if (subjects.flatMap { it.flashCards }.size > 100_000) throw ResponseStatusException(HttpStatus.FORBIDDEN)
