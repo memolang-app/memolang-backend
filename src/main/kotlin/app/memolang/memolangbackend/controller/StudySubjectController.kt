@@ -26,13 +26,15 @@ class StudySubjectController(
     @PostMapping(STUDY_SUBJECT_BASE_URL)
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
-    fun create(principal: Principal, @RequestBody body: CardSetRequestBody): StudySubjectEntity =
+    fun create(principal: Principal, @RequestBody body: CardSetRequestBody): StudySubjectEntity {
+        validateUserLimits(principal.name)
         studySubjectRepository.save(
             StudySubjectEntity(
                 name = body.name,
                 ownerUsername = principal.name,
             )
         )
+    }
 
     @DeleteMapping("$STUDY_SUBJECT_BASE_URL/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -56,6 +58,7 @@ class StudySubjectController(
         @PathVariable subjectId: Long,
         @RequestBody flashCardEntity: FlashCardEntity,
     ): StudySubjectEntity {
+        validateUserLimits(principal.name)
         val subject = findSubjectWithErrorHandling(principal, subjectId)
         if (flashCardEntity.id != null) throw ResponseStatusException(HttpStatus.CONFLICT)
         subject.flashCards.add(flashCardEntity)
@@ -82,6 +85,12 @@ class StudySubjectController(
             ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
         if (subject.ownerUsername != principal.name) throw ResponseStatusException(HttpStatus.FORBIDDEN)
         return subject
+    }
+
+    fun validateUserLimits(username: String): Boolean {
+        val subjects = studySubjectRepository.findByOwnerUsername(username)
+        if (subjects.size > 10) throw ResponseStatusException(HttpStatus.FORBIDDEN)
+        if (subjects.flatMap { it.flashCards }.size > 100_000) throw ResponseStatusException(HttpStatus.FORBIDDEN)
     }
 }
 
