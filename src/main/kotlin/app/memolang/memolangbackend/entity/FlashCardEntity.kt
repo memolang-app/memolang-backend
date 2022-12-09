@@ -26,7 +26,7 @@ class FlashCardEntity(
     var nextStudyAt: ZonedDateTime = ZonedDateTime.now(),
 ) {
     @JsonProperty
-    fun shouldBeStudied() = stage != Stage.DONE && nextStudyAt.isBefore(ZonedDateTime.now())
+    fun shouldBeStudied() = stage != Stage.DONE && !nextStudyAt.isAfter(ZonedDateTime.now())
 
     fun advance() {
         stage = stage.next()
