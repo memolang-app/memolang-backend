@@ -57,6 +57,7 @@ jobs:
   CD:
     needs: CI
     runs-on: ubuntu-latest
+    environment: CD
     steps:
       - name: Download JAR
         uses: actions/download-artifact@v2
