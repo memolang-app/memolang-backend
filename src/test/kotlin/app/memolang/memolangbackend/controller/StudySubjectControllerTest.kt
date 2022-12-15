@@ -50,11 +50,13 @@ class StudySubjectControllerTest : BaseIntegrationTest() {
         createSubjectResponse.body!!.createdAt shouldNotBe null
         val subjectsAfterPost = successfullyListUserSubjects(token)
         subjectsAfterPost shouldHaveSize 1
-        restTemplate.postForEntity(
+        val creationResponse = restTemplate.postForEntity(
             "$STUDY_SUBJECT_BASE_URL/${subjectsAfterPost.first()["id"]}/cards",
             request(token, mapOf("question" to "hablar", "answer" to "to speak")),
-            Any::class.java
-        ).statusCode shouldBe HttpStatus.OK
+            StudySubjectEntity::class.java
+        )
+        createSubjectResponse.statusCode shouldBe HttpStatus.CREATED
+        creationResponse.body!!.flashCards.first().shouldBeStudied() shouldBe true
         val subjectsAfterAddingCard = successfullyListUserSubjects(token)
         (subjectsAfterAddingCard.first()["flashCards"] as Collection<*>).shouldHaveSize(1)
         val cardBeforeReview = loadFirstCard((subjectsAfterAddingCard.first()["id"] as Int).toLong())
