@@ -7,11 +7,7 @@
 
 name: Java CI with Gradle
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+on: push
 
 permissions:
   contents: read
@@ -56,6 +52,7 @@ jobs:
         path: build/libs/memolang-backend-0.0.1-SNAPSHOT.jar
   CD:
     needs: CI
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     environment: CD
     steps:
