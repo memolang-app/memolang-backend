@@ -20,4 +20,5 @@ class OtpEntity(
     var claimedEmail: String? = null,
     @Column(nullable = false)
     var code: String? = null,
+    var used: Boolean = false,
 )

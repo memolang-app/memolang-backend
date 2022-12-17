@@ -35,9 +35,13 @@ class AuthenticationController(
 
     @PostMapping(AUTHENTICATION_BASE_URL)
     @Transactional
-    fun register(@RequestBody body: AuthenticationRequestPayload): ResponseEntity<Any> {
+    fun register(@RequestBody body: RegistrationRequestPayload): ResponseEntity<Any> {
         if (userRepository.findByUsername(body.username) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("message" to "username taken"))
+        }
+        val otpRecord = otpRepository.findByClaimedEmail(body.username)
+        if (otpRecord == null || otpRecord.used || otpRecord.code != body.otp) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("message" to "wrong otp")
         }
         val user = MemoLangUserEntity(username = body.username, passwordHash = passwordEncoder.encode(body.password))
         userRepository.save(user)
@@ -46,7 +50,7 @@ class AuthenticationController(
 
     @PostMapping(LOGIN_URL)
     @Transactional
-    fun login(@RequestBody body: AuthenticationRequestPayload): AuthenticatedUserPayload {
+    fun login(@RequestBody body: LoginRequestPayload): AuthenticatedUserPayload {
         val unauthorizedException = ResponseStatusException(HttpStatus.UNAUTHORIZED)
         val user = userRepository.findByUsername(body.username) ?: throw unauthorizedException
         if (!passwordEncoder.matches(body.password, user.passwordHash)) throw unauthorizedException
@@ -63,16 +67,21 @@ class AuthenticationController(
         val otpRecord = otpRepository.findByClaimedEmail(body.claimedEmail)
             ?: OtpEntity(claimedEmail = body.claimedEmail)
         otpRecord.code = otpNumber.toString()
+        otpRecord.used = false
         otpRepository.save(otpRecord)
         otpMailSender.sendOtp(body.claimedEmail, otpNumber.toString())
         return ResponseEntity.ok().build()
     }
 
-    private fun AuthenticationRequestPayload.toAuthenticatedUserPayload() =
+    private fun PayloadWithUsername.toAuthenticatedUserPayload() =
         AuthenticatedUserPayload(
             username = username,
             token = jwtUtils.generateJwtToken(username)
         )
+}
+
+interface PayloadWithUsername {
+    val username: String
 }
 
 data class OtpRequestPayload(
@@ -80,10 +89,21 @@ data class OtpRequestPayload(
     val claimedEmail: String
 )
 
-data class AuthenticationRequestPayload(
-    val username: String,
+data class LoginRequestPayload(
+    @NotBlank
+    override val username: String,
+    @NotBlank
     val password: String,
-)
+) : PayloadWithUsername
+
+data class RegistrationRequestPayload(
+    @NotBlank
+    override val username: String,
+    @NotBlank
+    val password: String,
+    @NotBlank
+    val otp: String,
+) : PayloadWithUsername
 
 data class AuthenticatedUserPayload(
     val username: String,
