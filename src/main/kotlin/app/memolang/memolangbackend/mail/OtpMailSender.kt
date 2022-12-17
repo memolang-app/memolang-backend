@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 class OtpMailSender(private val javaMailSender: JavaMailSender) {
-    fun sendSimpleMessage(receiver: String, otp: String) {
+    fun sendOtp(receiver: String, otp: String) {
         val message = SimpleMailMessage()
         message.from = "info@memolang.app"
         message.setTo(receiver)
