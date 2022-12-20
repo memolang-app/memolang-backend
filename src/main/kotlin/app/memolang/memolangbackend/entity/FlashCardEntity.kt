@@ -29,8 +29,8 @@ class FlashCardEntity(
     fun shouldBeStudied() = stage != Stage.DONE && !nextStudyAt.isAfter(ZonedDateTime.now())
 
     fun advance() {
-        stage = stage.next()
         nextStudyAt = nextStudyAt.plusDays(stage.daysToAdvance.toLong())
+        stage = stage.next()
     }
 }
 
