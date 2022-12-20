@@ -29,12 +29,13 @@ class AuthenticationControllerTest : BaseIntegrationTest() {
 
     @Test
     fun `Creating two users with the same username fails`() {
-        successfullyCreateUser("foo", "bar")
+        successfullyCreateUser("foo@bar.com", "bar")
         val response = restTemplate.postForEntity(
             AUTHENTICATION_BASE_URL,
             mapOf(
-                "username" to "foo",
+                "username" to "foo@bar.com",
                 "password" to "baz",
+                "otp" to "123"
             ),
             Any::class.java
         )

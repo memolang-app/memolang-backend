@@ -2,8 +2,12 @@ package app.memolang.memolangbackend
 
 import app.memolang.memolangbackend.controller.AUTHENTICATION_BASE_URL
 import app.memolang.memolangbackend.controller.AuthenticatedUserPayload
+import app.memolang.memolangbackend.controller.OTP_URL
+import app.memolang.memolangbackend.mail.OtpMailSender
 import app.memolang.memolangbackend.repository.MemoLangUserRepository
 import app.memolang.memolangbackend.repository.StudySubjectRepository
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
@@ -26,21 +30,39 @@ abstract class BaseIntegrationTest {
     @Autowired
     private lateinit var userRepository: MemoLangUserRepository
 
+    @MockkBean
+    private lateinit var mockedOtpSender: OtpMailSender
+
     @BeforeEach
     fun clearDb() {
         subjectRepository.deleteAll()
         userRepository.deleteAll()
     }
 
+    protected fun successfullySendOtpRequest(username: String): String {
+        var sentOtp: String? = null
+        every { mockedOtpSender.sendOtp(username, any()) } answers { sentOtp = secondArg() }
+        val otpResponse = restTemplate.postForEntity(
+            OTP_URL,
+            mapOf("claimedEmail" to username),
+            Any::class.java
+        )
+        otpResponse.statusCode shouldBe HttpStatus.OK
+        sentOtp shouldNotBe null
+        return sentOtp!!
+    }
+
     protected fun successfullyCreateUser(
-        username: String = "foo",
+        username: String = "foo@bar.com",
         password: String = "bar",
     ): Token {
+        val sentOtp = successfullySendOtpRequest(username)
         val response = restTemplate.postForEntity(
             AUTHENTICATION_BASE_URL,
             mapOf(
                 "username" to username,
                 "password" to password,
+                "otp" to sentOtp
             ),
             AuthenticatedUserPayload::class.java
         )
