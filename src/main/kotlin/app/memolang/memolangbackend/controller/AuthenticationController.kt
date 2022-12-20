@@ -43,6 +43,8 @@ class AuthenticationController(
         if (otpRecord == null || otpRecord.used || otpRecord.code != body.otp) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("message" to "wrong otp")
         }
+        otpRecord.used = true
+        otpRepository.save(otpRecord)
         val user = MemoLangUserEntity(username = body.username, passwordHash = passwordEncoder.encode(body.password))
         userRepository.save(user)
         return ResponseEntity.status(HttpStatus.CREATED).body(body.toAuthenticatedUserPayload())
