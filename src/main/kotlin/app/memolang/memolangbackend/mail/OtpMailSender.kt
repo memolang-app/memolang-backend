@@ -11,10 +11,10 @@ class OtpMailSender(private val javaMailSender: JavaMailSender) {
         val message = SimpleMailMessage()
         message.from = "info@memolang.app"
         message.setTo(receiver)
-        message.subject = "Memolang Password Recovery"
+        message.subject = "Memolang Email Verification"
         message.text = body(otp)
         javaMailSender.send(message)
     }
 
-    private fun body(otp: String) = "Hey! You can use the code $otp to reset your password."
+    private fun body(otp: String) = "Hey! Your verification code is $otp."
 }
