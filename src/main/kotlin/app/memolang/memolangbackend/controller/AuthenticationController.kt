@@ -56,8 +56,8 @@ class AuthenticationController(
     @Transactional
     fun resetPassword(@RequestBody body: CredentialsWithOtpPayload): ResponseEntity<Any> {
         val user = userRepository.findByUsername(body.username) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        val otp = otpRepository.findByClaimedEmail(body.username) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
-        if (otp.code != body.otp) throw ResponseStatusException(HttpStatus.CONFLICT)
+        val otp = otpRepository.findByClaimedEmail(body.username) ?: throw ResponseStatusException(HttpStatus.CONFLICT)
+        if (otp.code != body.otp) throw ResponseStatusException(HttpStatus.FORBIDDEN)
         user.passwordHash = passwordEncoder.encode(body.password)
         userRepository.save(user)
         return ResponseEntity.ok(body.toAuthenticatedUserPayload())
