@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
@@ -22,7 +23,8 @@ import kotlin.random.nextInt
 
 const val AUTHENTICATION_BASE_URL = "/api/users"
 const val LOGIN_URL = "$AUTHENTICATION_BASE_URL/login"
-const val OTP_URL = "$AUTHENTICATION_BASE_URL/otp"
+const val REGISTRATION_OTP_URL = "$AUTHENTICATION_BASE_URL/otp"
+const val LOGIN_OTP_URL = "$LOGIN_URL/otp"
 
 @RestController
 class AuthenticationController(
@@ -35,7 +37,7 @@ class AuthenticationController(
 
     @PostMapping(AUTHENTICATION_BASE_URL)
     @Transactional
-    fun register(@RequestBody body: RegistrationRequestPayload): ResponseEntity<Any> {
+    fun register(@RequestBody body: CredentialsWithOtpPayload): ResponseEntity<Any> {
         if (userRepository.findByUsername(body.username) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("message" to "username taken"))
         }
@@ -50,6 +52,17 @@ class AuthenticationController(
         return ResponseEntity.status(HttpStatus.CREATED).body(body.toAuthenticatedUserPayload())
     }
 
+    @PutMapping(AUTHENTICATION_BASE_URL)
+    @Transactional
+    fun resetPassword(@RequestBody body: CredentialsWithOtpPayload): ResponseEntity<Any> {
+        val user = userRepository.findByUsername(body.username) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        val otp = otpRepository.findByClaimedEmail(body.username) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        if (otp.code != body.otp) throw ResponseStatusException(HttpStatus.CONFLICT)
+        user.passwordHash = passwordEncoder.encode(body.password)
+        userRepository.save(user)
+        return ResponseEntity.ok(body.toAuthenticatedUserPayload())
+    }
+
     @PostMapping(LOGIN_URL)
     @Transactional
     fun login(@RequestBody body: LoginRequestPayload): AuthenticatedUserPayload {
@@ -59,20 +72,31 @@ class AuthenticationController(
         return body.toAuthenticatedUserPayload()
     }
 
-    @PostMapping(OTP_URL)
+    @PostMapping(REGISTRATION_OTP_URL)
     @Transactional
-    fun sendOtp(@RequestBody body: OtpRequestPayload): ResponseEntity<Any> {
+    fun sendRegistrationOtp(@RequestBody body: OtpRequestPayload): ResponseEntity<Any> {
         if (userRepository.findByUsername(body.claimedEmail) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(mapOf("message" to "username taken"))
         }
+        sendOtp(body.claimedEmail)
+        return ResponseEntity.ok().build()
+    }
+
+    @PostMapping(LOGIN_OTP_URL)
+    @Transactional
+    fun sendLoginOtp(@RequestBody body: OtpRequestPayload): ResponseEntity<Any> {
+        sendOtp(body.claimedEmail)
+        return ResponseEntity.ok().build()
+    }
+
+    private fun sendOtp(email: String) {
         val otpNumber = Random.nextInt(10000..99999)
-        val otpRecord = otpRepository.findByClaimedEmail(body.claimedEmail)
-            ?: OtpEntity(claimedEmail = body.claimedEmail)
+        val otpRecord = otpRepository.findByClaimedEmail(email)
+            ?: OtpEntity(claimedEmail = email)
         otpRecord.code = otpNumber.toString()
         otpRecord.used = false
         otpRepository.save(otpRecord)
-        otpMailSender.sendOtp(body.claimedEmail, otpNumber.toString())
-        return ResponseEntity.ok().build()
+        otpMailSender.sendOtp(email, otpNumber.toString())
     }
 
     private fun PayloadWithUsername.toAuthenticatedUserPayload() =
@@ -98,7 +122,7 @@ data class LoginRequestPayload(
     val password: String,
 ) : PayloadWithUsername
 
-data class RegistrationRequestPayload(
+data class CredentialsWithOtpPayload(
     @NotBlank
     override val username: String,
     @NotBlank
