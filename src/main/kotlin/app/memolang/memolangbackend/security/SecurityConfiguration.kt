@@ -33,6 +33,7 @@ class SecurityConfiguration {
             .disable()
             .authorizeRequests()
             .antMatchers(HttpMethod.POST, "$AUTHENTICATION_BASE_URL/**").permitAll()
+            .antMatchers(HttpMethod.PUT, "$AUTHENTICATION_BASE_URL/**").permitAll()
             .antMatchers(HttpMethod.GET, "/").permitAll()
             .anyRequest().authenticated()
             .and()

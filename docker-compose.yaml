@@ -10,8 +10,3 @@ services:
       - '3306:3306'
     expose:
       - '3306'
-    volumes:
-      - db:/var/lib/mysql
-# Names our volume
-volumes:
-  db:

@@ -2,9 +2,11 @@ package app.memolang.memolangbackend
 
 import app.memolang.memolangbackend.controller.AUTHENTICATION_BASE_URL
 import app.memolang.memolangbackend.controller.AuthenticatedUserPayload
-import app.memolang.memolangbackend.controller.OTP_URL
+import app.memolang.memolangbackend.controller.LOGIN_OTP_URL
+import app.memolang.memolangbackend.controller.REGISTRATION_OTP_URL
 import app.memolang.memolangbackend.mail.OtpMailSender
 import app.memolang.memolangbackend.repository.MemoLangUserRepository
+import app.memolang.memolangbackend.repository.OtpRepository
 import app.memolang.memolangbackend.repository.StudySubjectRepository
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -30,6 +32,9 @@ abstract class BaseIntegrationTest {
     @Autowired
     private lateinit var userRepository: MemoLangUserRepository
 
+    @Autowired
+    private lateinit var otpRepository: OtpRepository
+
     @MockkBean
     private lateinit var mockedOtpSender: OtpMailSender
 
@@ -37,13 +42,14 @@ abstract class BaseIntegrationTest {
     fun clearDb() {
         subjectRepository.deleteAll()
         userRepository.deleteAll()
+        otpRepository.deleteAll()
     }
 
-    protected fun successfullySendOtpRequest(username: String): String {
+    protected fun successfullySendOtpRequest(username: String, forRegistration: Boolean): String {
         var sentOtp: String? = null
         every { mockedOtpSender.sendOtp(username, any()) } answers { sentOtp = secondArg() }
         val otpResponse = restTemplate.postForEntity(
-            OTP_URL,
+            if (forRegistration) REGISTRATION_OTP_URL else LOGIN_OTP_URL,
             mapOf("claimedEmail" to username),
             Any::class.java
         )
@@ -56,7 +62,7 @@ abstract class BaseIntegrationTest {
         username: String = "foo@bar.com",
         password: String = "bar",
     ): Token {
-        val sentOtp = successfullySendOtpRequest(username)
+        val sentOtp = successfullySendOtpRequest(username, forRegistration = true)
         val response = restTemplate.postForEntity(
             AUTHENTICATION_BASE_URL,
             mapOf(
