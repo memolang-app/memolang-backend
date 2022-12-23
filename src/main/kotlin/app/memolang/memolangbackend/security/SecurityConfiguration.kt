@@ -27,7 +27,7 @@ class SecurityConfiguration {
     fun filterChain(http: HttpSecurity, jwtRequestFilter: JwtRequestFilter): SecurityFilterChain {
         http
             .cors()
-            .configurationSource(corsConfigurationSource())
+            // .configurationSource(corsConfigurationSource())
             .and()
             .csrf()
             .disable()
@@ -45,7 +45,12 @@ class SecurityConfiguration {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues())
+        source.registerCorsConfiguration(
+            "/**",
+            CorsConfiguration()
+                .also { it.allowedMethods = listOf("HEAD", "GET", "PUT", "POST", "DELETE", "PATCH") }
+                .applyPermitDefaultValues()
+        )
         return source
     }
 
@@ -53,7 +58,10 @@ class SecurityConfiguration {
     fun corsConfigurer(): WebMvcConfigurer {
         return object : WebMvcConfigurer {
             override fun addCorsMappings(registry: CorsRegistry) {
-                registry.addMapping("/**").allowedOrigins("http://localhost:61518")
+                registry.addMapping("/**").allowedOrigins(
+                    "http://localhost:61518",
+                    "https://study.memolang.org"
+                )
             }
         }
     }
