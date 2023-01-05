@@ -5,15 +5,18 @@ import app.memolang.memolangbackend.entity.OtpEntity
 import app.memolang.memolangbackend.mail.OtpMailSender
 import app.memolang.memolangbackend.repository.MemoLangUserRepository
 import app.memolang.memolangbackend.repository.OtpRepository
+import app.memolang.memolangbackend.repository.StudySubjectRepository
 import app.memolang.memolangbackend.security.JwtUtils
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
+import java.security.Principal
 import javax.transaction.Transactional
 import javax.validation.constraints.Email
 import javax.validation.constraints.NotBlank
@@ -30,6 +33,7 @@ const val LOGIN_OTP_URL = "$LOGIN_URL/otp"
 class AuthenticationController(
     private val userRepository: MemoLangUserRepository,
     private val otpRepository: OtpRepository,
+    private val subjectRepository: StudySubjectRepository,
     private val passwordEncoder: BCryptPasswordEncoder,
     private val jwtUtils: JwtUtils,
     private val otpMailSender: OtpMailSender,
@@ -50,6 +54,17 @@ class AuthenticationController(
         val user = MemoLangUserEntity(username = body.username, passwordHash = passwordEncoder.encode(body.password))
         userRepository.save(user)
         return ResponseEntity.status(HttpStatus.CREATED).body(body.toAuthenticatedUserPayload())
+    }
+
+    @DeleteMapping(AUTHENTICATION_BASE_URL)
+    @Transactional
+    fun delete(principal: Principal): ResponseEntity<Any> {
+        val user = userRepository.findByUsername(principal.name) ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
+        subjectRepository
+            .findByOwnerUsername(principal.name)
+            .forEach { subjectRepository.delete(it) }
+        userRepository.delete(user)
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
     @PutMapping(AUTHENTICATION_BASE_URL)
