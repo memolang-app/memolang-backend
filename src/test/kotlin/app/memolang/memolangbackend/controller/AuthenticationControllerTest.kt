@@ -1,18 +1,51 @@
 package app.memolang.memolangbackend.controller
 
 import app.memolang.memolangbackend.BaseIntegrationTest
+import app.memolang.memolangbackend.entity.FlashCardEntity
+import app.memolang.memolangbackend.entity.StudySubjectEntity
+import app.memolang.memolangbackend.repository.FlashCardRepository
+import app.memolang.memolangbackend.repository.StudySubjectRepository
 import app.memolang.memolangbackend.shouldBe
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 
 class AuthenticationControllerTest : BaseIntegrationTest() {
 
+    @Autowired
+    private lateinit var flashCardRepository: FlashCardRepository
+
+    @Autowired
+    private lateinit var subjectRepository: StudySubjectRepository
+
     @Test
     fun `Test registering a new user`() {
         successfullyCreateUser()
+    }
+
+    @Test
+    fun `test deleting user`() {
+        val token = successfullyCreateUser("foo@bar.com", "bar")
+        subjectRepository.save(
+            StudySubjectEntity(
+                name = "Spanish",
+                ownerUsername = "foo@bar.com",
+                flashCards = mutableListOf(FlashCardEntity(question = "hablar", answer = "to speak")),
+            )
+        )
+        subjectRepository.count() shouldBe 1
+        flashCardRepository.count() shouldBe 1
+        restTemplate.exchange(
+            AUTHENTICATION_BASE_URL,
+            HttpMethod.DELETE,
+            request(token),
+            Any::class.java
+        ).statusCode shouldBe HttpStatus.NO_CONTENT
+        subjectRepository.count() shouldBe 0
+        flashCardRepository.count() shouldBe 0
     }
 
     @Test
